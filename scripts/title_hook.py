@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inject a bounded title check; at most one Stop reminder per user turn."""
+"""Inject optional title guidance without ever blocking a user message or reply."""
 import json
 import os
 import shlex
@@ -52,7 +52,9 @@ def handle(payload, store):
         return {}
     event = payload.get('hook_event_name')
     tid = payload.get('session_id') or os.environ.get('CODEX_THREAD_ID')
-    if event not in ('UserPromptSubmit', 'Stop') or not tid or payload.get('agent_id'):
+    # Older desktop sessions may still invoke their cached Stop definition.
+    # It must remain a no-op even after the new package removes that hook.
+    if event != 'UserPromptSubmit' or not tid or payload.get('agent_id'):
         return {}
     with store.locked(tid, '.hook.lock'):
         state = store.load(tid)
@@ -66,14 +68,7 @@ def handle(payload, store):
                                     'checked': False, 'nudged': False, 'at': now()}
                 store.record_prompt(tid, state['pending'])
             return {'hookSpecificOutput': {'hookEventName': event, 'additionalContext': context_for(tid, state, store)}}
-        pending = state.get('pending', {})
-        if payload.get('stop_hook_active') or not pending or pending.get('checked') or pending.get('nudged'):
-            return {}
-        if payload.get('turn_id') and pending['id'] != payload['turn_id']:
-            return {}
-        pending['nudged'] = True
-        store.record_nudge(tid, pending['id'])
-        return {'decision': 'block', 'reason': REMINDER + '\n' + context_for(tid, state, store) + '\n这是本轮唯一一次提醒。失败后结束，不再重试。'}
+        return {}
 
 
 def main():

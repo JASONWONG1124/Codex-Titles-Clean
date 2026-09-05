@@ -30,17 +30,11 @@ class HookTests(unittest.TestCase):
         self.assertIn('分类根据内容决定，可新增', context)
         self.assertNotIn('做一套课程', json.dumps(self.store.load(self.tid), ensure_ascii=False))
 
-    def test_stop_reminds_once_even_if_continuation_gets_new_turn(self):
+    def test_stop_does_not_interrupt_reply_when_check_is_missing(self):
         handle(self.payload('UserPromptSubmit', prompt='test'), self.store)
         out = handle(self.payload('Stop', stop_hook_active=False), self.store)
-        self.assertEqual(out['decision'], 'block')
-        continuation = self.payload('UserPromptSubmit', prompt=out['reason'])
-        continuation['turn_id'] = 'continuation-turn'
-        handle(continuation, self.store)
-        stop = self.payload('Stop', stop_hook_active=True)
-        stop['turn_id'] = 'continuation-turn'
-        self.assertEqual(handle(stop, self.store), {})
-        self.assertTrue(self.store.load(self.tid)['pending']['nudged'])
+        self.assertEqual(out, {})
+        self.assertFalse(self.store.load(self.tid)['pending']['nudged'])
         self.assertEqual(handle(self.payload('Stop', stop_hook_active=False), self.store), {})
 
     def test_checked_or_failed_turn_does_not_block(self):

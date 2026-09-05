@@ -1,25 +1,14 @@
 {
-  "description": "在正常对话结束前检查三段标题；遗漏时最多提醒一次。",
+  "description": "提供标题检查上下文；脚本缺失、失败或超时均跳过，不阻止消息或回复。",
   "hooks": {
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/scripts/title_hook.py\"",
+            "command": "python3 -c 'import json, subprocess, sys\noutput = {}\ntry:\n    child = subprocess.run([sys.executable, sys.argv[1]], input=sys.stdin.read(1048576), text=True, capture_output=True, timeout=2)\n    parsed = json.loads(child.stdout) if child.returncode == 0 else {}\n    specific = parsed.get(\"hookSpecificOutput\", {}) if isinstance(parsed, dict) else {}\n    if isinstance(specific, dict) and specific.get(\"hookEventName\") == \"UserPromptSubmit\" and isinstance(specific.get(\"additionalContext\"), str):\n        output = {\"hookSpecificOutput\": {\"hookEventName\": \"UserPromptSubmit\", \"additionalContext\": specific[\"additionalContext\"]}}\nexcept Exception:\n    pass\nprint(json.dumps(output))' \"${PLUGIN_ROOT}/scripts/title_hook.py\" 2>/dev/null || printf '{}\\n'",
             "timeout": 5,
             "additionalContextLimit": 5000
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/scripts/title_hook.py\"",
-            "timeout": 5
           }
         ]
       }

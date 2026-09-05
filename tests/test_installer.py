@@ -28,7 +28,7 @@ class InstallerTests(unittest.TestCase):
         self.package = self.root / 'shared $(touch NEVER) plugin'
         self.package.mkdir()
         self.addCleanup(patch.stopall)
-        patch.dict(os.environ, {'HOME': str(self.home)}).start()
+        patch.dict(os.environ, {'HOME': str(self.home), 'CODEX_HOME': str(self.home / '.codex')}).start()
         patch.object(installer, 'codex_binary', return_value='/fake Codex/codex').start()
         for path, value in {
             '.codex-plugin/plugin.json': {'name': 'codex-titles-clean', 'version': '0.2.0'},
@@ -48,6 +48,8 @@ class InstallerTests(unittest.TestCase):
         self.calls = []
         self.backfill_code = 0
         self.install_code = 0
+        self.materialize_cache = True
+        self.prune_before_error = False
         self.output = io.StringIO()
 
     @property
@@ -65,8 +67,14 @@ class InstallerTests(unittest.TestCase):
         if 'read_marketplace_name.py' in args[1]:
             return subprocess.run(args, **kwargs)
         if args[1:3] == ['plugin', 'add']:
+            cache = self.home / '.codex/plugins/cache' / args[3].split('@')[1] / installer.NAME
+            if cache.exists() and (not self.install_code or self.prune_before_error):
+                shutil.rmtree(cache)
             if self.install_code:
                 raise subprocess.CalledProcessError(self.install_code, args)
+            if self.materialize_cache:
+                version = json.loads((self.target / '.codex-plugin/plugin.json').read_text())['version']
+                shutil.copytree(self.target, cache / version)
             return subprocess.CompletedProcess(args, 0)
         self.assertEqual(args[2:], ['run', '--automatic'])
         return subprocess.CompletedProcess(args, self.backfill_code)
@@ -166,6 +174,31 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(self.run_install(), 1)
         self.assertEqual(len(self.calls), 1)
         self.assertIn('插件安装未确认成功', self.output.getvalue())
+
+    def old_cache(self):
+        cache = self.home / '.codex/plugins/cache/personal' / installer.NAME / '0.1.0'
+        shutil.copytree(self.package, cache)
+        (cache / 'scripts/title_hook.py').write_text('# old desktop session still calls this path')
+        return cache
+
+    def test_upgrade_preserves_path_used_by_existing_desktop_sessions(self):
+        old = self.old_cache()
+        before = (old / 'scripts/title_hook.py').read_bytes()
+        self.assertEqual(self.run_install(), 0)
+        self.assertTrue((old / 'scripts/title_hook.py').exists(), 'upgrade removed a live hook path')
+        self.assertEqual((old / 'scripts/title_hook.py').read_bytes(), before)
+
+    def test_failed_upgrade_restores_old_cache_before_returning(self):
+        old = self.old_cache()
+        self.install_code = 1
+        self.prune_before_error = True
+        self.assertEqual(self.run_install(), 1)
+        self.assertTrue((old / 'scripts/title_hook.py').exists(), 'failed install lost the previous working runtime')
+
+    def test_cli_success_without_installed_runtime_does_not_start_history(self):
+        self.materialize_cache = False
+        self.assertEqual(self.run_install(), 1)
+        self.assertEqual(len(self.calls), 1)
 
     def test_incomplete_package_has_no_side_effects(self):
         (self.package / 'scripts/history_backfill.py').unlink()

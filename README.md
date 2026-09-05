@@ -77,9 +77,11 @@ python3 scripts/install_plugin.py
 
 </details>
 
-**首次开启聊天中的自动检查：** 在 Codex **设置 → Hooks** 中审阅并信任本插件的两项 Hook，
+**首次开启聊天中的自动检查：** 在 Codex **设置 → Hooks** 中审阅并信任本插件的 UserPromptSubmit Hook，
 再到插件页确认 **Codex-Titles-Clean** 已启用。新建一个任务即可开始使用。
 安装脚本会自动整理旧历史；Hook 信任需要单独完成。
+
+**更新插件后，请在方便时重启 Codex，载入最新的自动检查。** 标题检查出错会跳过本次命名，正常聊天继续。
 
 从旧版 `sidebar-titles` 升级时，确认新版安装成功后卸载旧插件，避免重复检查；原标题记录会保留。
 
@@ -182,9 +184,11 @@ Codex-Titles-Clean/
 │   ├── test_archived.py
 │   ├── test_backfill.py
 │   ├── test_compatibility.py
+│   ├── test_hook_safety.py
 │   ├── test_hooks.py
 │   ├── test_installer.py
 │   ├── test_manager.py
+│   ├── test_real_upgrade.py
 │   ├── test_report.py
 │   └── test_report_workflow.py
 ├── .gitignore  # 排除本地记录和报告

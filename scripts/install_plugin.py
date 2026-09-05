@@ -18,10 +18,12 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -141,6 +143,52 @@ def describe_hooks(package: Path):
     print('上面是文件校验值，不是 Codex 的 Hook 信任键。安装器不会修改全局信任设置。')
 
 
+def install_cached_plugin(codex, selector, package, home, env, runner=subprocess.run):
+    """Keep runtime paths that a running desktop process may still reference.
+
+    The CLI can prune older cache versions without invalidating another running
+    process's hook registry. Preserve those versions across success and failure.
+    A failed restoration leaves the backup on disk for recovery.
+    """
+    market = selector.rsplit('@', 1)[-1]
+    version = json.loads((package / '.codex-plugin/plugin.json').read_text())['version']
+    if not re.fullmatch(r'[A-Za-z0-9_-]+', market) or not re.fullmatch(r'[A-Za-z0-9.+_-]+', version):
+        raise ValueError('插件版本或市场名称无效。')
+    codex_home = Path(env.get('CODEX_HOME') or home / '.codex').expanduser()
+    cache = codex_home / 'plugins/cache' / market / NAME
+    backup = None
+    if cache.exists():
+        if cache.is_symlink() or any(p.is_symlink() for p in cache.rglob('*')):
+            raise ValueError('插件缓存包含符号链接，未继续升级。')
+        backup = Path(tempfile.mkdtemp(prefix=NAME + '-upgrade-', dir=codex_home))
+        shutil.copytree(cache, backup / 'versions',
+                        ignore=shutil.ignore_patterns('.git', '__pycache__', '*.pyc', '.DS_Store'))
+    verified = False
+    try:
+        runner([codex, 'plugin', 'add', selector], check=True, env=env, timeout=180)
+        installed = cache / version
+        validate_package(installed)
+        required = ['hooks/hooks.json', '.codex-plugin/plugin.json',
+                    'skills/codex-titles-clean/SKILL.md']
+        required += [str(p.relative_to(package)) for p in (package / 'scripts').glob('*.py')]
+        if any((installed / name).read_bytes() != (package / name).read_bytes() for name in required):
+            raise ValueError('插件安装后的脚本与源码不一致，未启动历史整理。')
+        verified = True
+    finally:
+        if backup is not None:
+            try:
+                for saved in (backup / 'versions').iterdir():
+                    if not saved.is_dir():
+                        continue
+                    destination = cache / saved.name
+                    if not destination.exists() or not verified:
+                        shutil.copytree(saved, destination, dirs_exist_ok=True)
+            except OSError as error:
+                raise OSError(f'旧版运行文件恢复失败；备份保留在 {backup}：{error}') from error
+            shutil.rmtree(backup)
+    return cache / version
+
+
 def commands(codex: str, selector: str, target: Path):
     print('\n管理位置：Codex → 插件（Plugins）→ Codex-Titles-Clean。')
     print('查看安装状态：' + shlex.join([codex, 'plugin', 'list', '--json']))
@@ -185,8 +233,8 @@ def install(package: Path, home: Path, runner=subprocess.run):
         selector = f'{NAME}@{market_name}'
         env = dict(os.environ, CODEX_TITLES_CLEAN_CODEX=codex, SIDEBAR_TITLES_CODEX=codex)
         try:
-            runner([codex, 'plugin', 'add', selector], check=True, env=env, timeout=180)
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+            install_cached_plugin(codex, selector, target, home, env, runner)
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
             print(f'插件安装未确认成功：{error}', file=sys.stderr)
             commands(codex, selector, target)
             return 1
@@ -204,7 +252,7 @@ def install(package: Path, home: Path, runner=subprocess.run):
         else:
             print('\n插件已安装，但历史整理或 Excel 导出未全部完成。请查看上方状态，用下方继续或重新导出命令恢复。')
         print('以后自动检查：在 Codex 设置 → Hooks 中查看并信任本插件声明的 Hook。')
-        print('若已经信任，无需重复操作。新建任务可载入最新插件；已有历史由上述整理单独处理。')
+        print('升级后请在方便时重启 Codex，以载入最新的自动检查；旧运行路径与原标题备份会保留。')
         commands(codex, selector, target)
         return code
 

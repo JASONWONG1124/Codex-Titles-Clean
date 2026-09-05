@@ -119,8 +119,8 @@ class CompatibilityTests(unittest.TestCase):
         store = Store()
         title_hook.handle({'hook_event_name': 'UserPromptSubmit', 'session_id': 'fixture',
                            'turn_id': 'original-turn', 'prompt': '测试主题'}, store)
-        title_hook.handle({'hook_event_name': 'Stop', 'session_id': 'fixture',
-                           'turn_id': 'original-turn'}, store)
+        # A receipt left by the old version before upgrading.
+        store.record_nudge('fixture', 'original-turn')
         title_hook.handle({'hook_event_name': 'UserPromptSubmit', 'session_id': 'fixture',
                            'turn_id': 'continuation-turn',
                            'prompt': title_hook.LEGACY_REMINDER + '\n旧版本最后一次提醒'}, store)

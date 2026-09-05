@@ -65,11 +65,13 @@ python3 scripts/install_plugin.py
 
 After installation:
 
-1. In **Codex Settings → Hooks**, review and trust this plugin's two hooks. This step is separate from running the installer.
+1. In **Codex Settings → Hooks**, review and trust this plugin's UserPromptSubmit hook. This step is separate from running the installer.
 2. In **Codex → Plugins**, find **Codex-Titles-Clean** and confirm it is enabled.
 3. Start a new task and chat normally. Titles are checked after the main work in a turn; a new task may need another turn before its title is ready to update.
 
 Initial history cleanup does not require opening every old task.
+
+**After updating the plugin, restart Codex when convenient to load the latest title check.** A failed title check skips naming for that turn and lets the conversation continue.
 
 Upgrading from `sidebar-titles`? After confirming the new plugin is installed, uninstall the old one to avoid duplicate checks. Original-title records are preserved.
 
@@ -151,9 +153,11 @@ Codex-Titles-Clean/
 │   ├── test_archived.py
 │   ├── test_backfill.py
 │   ├── test_compatibility.py
+│   ├── test_hook_safety.py
 │   ├── test_hooks.py
 │   ├── test_installer.py
 │   ├── test_manager.py
+│   ├── test_real_upgrade.py
 │   ├── test_report.py
 │   └── test_report_workflow.py
 ├── .gitignore  # Keep local records and reports out of Git
