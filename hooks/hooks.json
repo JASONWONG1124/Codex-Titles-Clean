@@ -1,0 +1,28 @@
+{
+  "description": "在正常对话结束前检查三段标题；遗漏时最多提醒一次。",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/scripts/title_hook.py\"",
+            "timeout": 5,
+            "additionalContextLimit": 5000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/scripts/title_hook.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+*.log
+.env
+.env.*
+!.env.example
+# Local conversation data and generated reports must stay private.
+reports/
+history-migration/
+state/
+*.xlsx
+*.csv
+# Distribution archives are not part of the source repository.
+*.zip

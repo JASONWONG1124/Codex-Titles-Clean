@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" role="img" aria-labelledby="title desc">
+  <title id="title">Codex-Titles-Clean 标题整理前后对照</title>
+  <desc id="desc">四个示例展示如何将模糊的任务标题整理成简短对象、两字分类和具体主题。</desc>
+  <rect width="1200" height="600" rx="24" fill="#f5f7fa"/>
+  <g font-family="-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif">
+    <text x="48" y="59" font-size="16" font-weight="700" fill="#267d68" letter-spacing="2">Codex-Titles-Clean</text>
+    <text x="48" y="112" font-size="36" font-weight="700" fill="#172d38">在列表里看清每条对话的用途</text>
+    <text x="48" y="152" font-size="18" fill="#5c6c77">简短对象 丨 两字分类 丨 具体主题</text>
+    <rect x="48" y="198" width="450" height="314" rx="16" fill="#ffffff" stroke="#dfe5eb"/>
+    <rect x="526" y="198" width="626" height="314" rx="16" fill="#ffffff" stroke="#b9dcd1"/>
+    <text x="76" y="239" font-size="17" font-weight="700" fill="#71808b">整理前</text>
+    <text x="554" y="239" font-size="17" font-weight="700" fill="#267d68">整理后</text>
+    <g fill="#f5f7fa">
+      <rect x="64" y="259" width="418" height="49" rx="8"/>
+      <rect x="64" y="377" width="418" height="49" rx="8"/>
+    </g>
+    <g fill="#f0f8f4">
+      <rect x="542" y="259" width="594" height="49" rx="8"/>
+      <rect x="542" y="377" width="594" height="49" rx="8"/>
+    </g>
+    <g font-size="20" fill="#74808a">
+      <text x="82" y="291">优化 PPT 内容</text>
+      <text x="82" y="350">继续讨论那个方案</text>
+      <text x="82" y="409">帮我看看这个问题</text>
+      <text x="82" y="468">开发标题功能</text>
+    </g>
+    <g font-size="21" fill="#172d38">
+      <text x="560" y="291">PPT<tspan fill="#8ea59c">丨</tspan><tspan fill="#267d68">创作</tspan><tspan fill="#8ea59c">丨</tspan>用户感受主题课件</text>
+      <text x="560" y="350">课程<tspan fill="#8ea59c">丨</tspan><tspan fill="#267d68">教研</tspan><tspan fill="#8ea59c">丨</tspan>观点表达练习</text>
+      <text x="560" y="409">Codex<tspan fill="#8ea59c">丨</tspan><tspan fill="#267d68">排障</tspan><tspan fill="#8ea59c">丨</tspan>终端代理设置失效</text>
+      <text x="560" y="468">Codex<tspan fill="#8ea59c">丨</tspan><tspan fill="#267d68">开发</tspan><tspan fill="#8ea59c">丨</tspan>对话标题自动整理</text>
+    </g>
+    <text x="48" y="557" font-size="16" fill="#62737f">首次整理历史 · 方向变化时更新 · 自动生成 Excel 对照表</text>
+    <text x="1152" y="557" text-anchor="end" font-size="14" fill="#87929a">示例内容，非应用截图</text>
+  </g>
+</svg>
